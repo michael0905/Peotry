@@ -1,0 +1,16 @@
+/* 生成唐诗时用，batch_size为1 */
+{
+  "exp_name": "Peotry",
+  "num_epochs": 10,
+  "decay_steps": 1000,
+  "decay_rate": 0.96,
+  "learning_rate": 0.001,
+  "gradient_clip": 5,
+  "batch_size": 1,
+  "filename": "./poetryTang.txt",
+  "embedding_size": 128,
+  "state_size": 128,
+  "max_to_keep":5,
+  "shortest_length":10,
+  "longest_length":512
+}

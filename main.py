@@ -18,44 +18,62 @@ def main():
 
     except:
         print("missing or invalid arguments")
+        print("usage: python3 main.py -m train|test")
         exit(0)
 
     if mode == 'train':
         config_file = "configs/config.json"
-    elif mode == 'test':
-        config_file = "configs/test_config.json"
-    config = process_config(config_file)
+        config = process_config(config_file)
+        # create the experiments dirs
+        create_dirs([config.summary_dir, config.checkpoint_dir])
 
-    # create the experiments dirs
-    create_dirs([config.summary_dir, config.checkpoint_dir])
-
-    # create your data generator
-    data = DataGenerator(config)
-    # create an instance of the model you want
-    model = GeneratorModel(config, data.word_num)
-    # create tensorflow session
-    sess = tf.Session()
-    #load model if exists
-    model.load(sess)
-    # create tensorboard logger
-    logger = Logger(sess, config)
-    # create trainer and pass all the previous components to it
-    trainer = Trainer(sess, model, data, config, logger)
-
-    if mode == 'train':
-        # here you train your model
+        # create your data generator
+        data = DataGenerator(config)
+        # create an instance of the model you want
+        model = GeneratorModel(config, data.word_num)
+        # create tensorflow session
+        sess = tf.Session()
+        #load model if exists
+        model.load(sess)
+        # create tensorboard logger
+        logger = Logger(sess, config)
+        # create trainer and pass all the previous components to it
+        trainer = Trainer(sess, model, data, config, logger)
         trainer.train()
     elif mode == 'test':
-        trainer.create_poetry()
+        config_file = "configs/test_config.json"
+        config = process_config(config_file)
+
+        # create the experiments dirs
+        create_dirs([config.summary_dir, config.checkpoint_dir])
+
+        # create your data generator
+        data = DataGenerator(config)
+        # create an instance of the model you want
+        model = GeneratorModel(config, data.word_num)
+        # create tensorflow session
+        sess = tf.Session()
+        #load model if exists
+        model.load(sess)
+        # create tensorboard logger
+        logger = Logger(sess, config)
+        model.create_poetry(sess, data)
+
 
 def test_data():
     config_file = 'configs/config.json'
     config = process_config(config_file)
     generator = DataGenerator(config)
-    x, y = next(generator.next_batch(5))
-    print(x.shape)
+    x, y = generator.generateBatch(2)
+    print(x[0].shape)
     # print(generator.dictionary[''])
     print(generator.dictionary[' '])
+    print(generator.dictionary['['])
+    print(generator.dictionary[']'])
+    print(generator.dictionary['，'])
+    print(generator.dictionary['。'])
+
+
 
 if __name__ == '__main__':
     main()

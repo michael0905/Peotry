@@ -1,6 +1,7 @@
 # -*-coding:utf-8-*-#
 import numpy as np
 import collections
+import random
 from utils.utils import length, pad_sequence
 
 class DataGenerator:
@@ -12,13 +13,16 @@ class DataGenerator:
 
     def next_batch(self, batch_size):
         batch_X = []
+        batch_Y = []
         idx = np.random.choice(len(self.poetry_vectors), batch_size)
         x = self.poetry_vectors[idx]
-        batch_length = [len(p) for p in x]
-        batch_X = np.array([pad_sequence(p, self.config.longest_length, self.dictionary[' ']) for p in x])
+        max_length = max([len(vector) for vector in x])
+        batch_X = np.full((batch_size, max_length), self.dictionary[" "], np.int32) # padding space
+        for j in range(batch_size):
+            batch_X[j, :len(x[j])] = x[j]
         batch_Y = np.copy(batch_X)
         batch_Y[:, :-1] = batch_X[:, 1:]
-        yield batch_X, batch_Y, batch_length
+        yield batch_X, batch_Y
 
     def get_word_num(self):
         return self.word_num
@@ -28,11 +32,9 @@ class DataGenerator:
         with open(poetry_file, 'r', encoding='utf-8') as f:
             for index, line in enumerate(f):
                 try:
-                    title, content = line.strip().split(":")
+                    title, author, content = line.strip().split("::")
                     content = content.replace(" ", "")
-                    if '_' in content or '(' in content or \
-                    '（' in content or '《' in content or \
-                    '[' in content :
+                    if '_' in content or '(' in content or '（' in content or '《' in content or '[' in content :
                         continue
                     if len(content) < self.config.shortest_length or len(content) > self.config.longest_length:
                         continue
@@ -44,33 +46,19 @@ class DataGenerator:
 
     def build_dataset(self, filename):
         poetrys = self.get_poetrys(filename)
-        poetrys = sorted(poetrys, key=lambda line: len(line))
-        print("唐诗总数:", len(poetrys))
-        # print("shortest poetry: {}".format(poetrys[0]))
-        # print("longest poetry: {}".format(poetrys[-1]))
-        print("示例：{}".format(poetrys[1000]))
-        words = []
+        word_freq = collections.Counter()
         for poetry in poetrys:
-            words += [word for word in poetry]
-        # print(words[:10])
-        counter = collections.Counter(words)
-        # 从大到小排序
-        counter_pairs = sorted(counter.items(), key=lambda x: -x[1])
-        # 从counter中解压，并获取当中的词(不重复)
-        words, _ = zip(*counter_pairs)
-        words = words[:len(words)] + (" ", )
-        # word -> id
-        dictionary = dict(zip(words, range(len(words))))
-        # id -> word
-        reversed_dictionary = dict(zip(dictionary.values(), dictionary.keys()))
+            word_freq.update(poetry)
 
-        print("dictionary size: {}".format(len(dictionary.keys())))
+        word_freq[" "] = -1
+        word_pairs = sorted(word_freq.items(), key = lambda x: -x[1])
+        self.words, freq = zip(*word_pairs)
+        self.word_num = len(self.words)
 
-        poetry_vectors = [[dictionary[word] for word in poetry] for poetry in poetrys]
-        print("poetry vector example: {}".format(poetry_vectors[1000]))
-        # print("id 0: {}".format(reversed_dictionary[0]))
-        self.word_num = len(dictionary.keys())
-        print("word number: {}".format(self.word_num))
-        self.dictionary = dictionary
+        self.dictionary = dict(zip(self.words, range(self.word_num))) #word to ID
+        poetry_vectors = [([self.dictionary[word] for word in poetry]) for poetry in poetrys] # poetry to vector
         self.poetry_vectors = np.array(poetry_vectors)
-        self.reversed_dictionary = reversed_dictionary
+        self.reversed_dictionary = dict(zip(self.dictionary.values(), self.dictionary.keys()))
+
+        print("唐诗总数: {}".format(len(self.poetry_vectors)))
+        print("字典词数: {}".format(len(self.dictionary.keys())))

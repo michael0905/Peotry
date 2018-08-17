@@ -25,13 +25,9 @@ def pad_sequence(sequence, max_length, pad):
     result = sequence[:max_length - padN] + [pad] * padN
     return result
 
-def sample(probs):
-    """
-    sample a word based on probability
-    return index
-    """
-    t = np.cumsum(probs) #prefix sum
-    s = np.sum(probs)
-    coff = np.random.rand(1)
-    index = int(np.searchsorted(t, coff * s)) # large margin has high possibility to be sampled
-    return index
+def probsToWord(weights, words):
+    """probs to word"""
+    prefixSum = np.cumsum(weights) #prefix sum
+    ratio = np.random.rand(1)
+    index = np.searchsorted(prefixSum, ratio * prefixSum[-1]) # large margin has high possibility to be sampled
+    return words[index[0]]
