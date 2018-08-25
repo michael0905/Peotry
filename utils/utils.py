@@ -5,9 +5,14 @@ def get_args():
     argparser = argparse.ArgumentParser(description=__doc__)
     argparser.add_argument(
         '-m', '--mode',
-        metavar='C',
+        metavar='M',
         default='train',
         help='The Configuration file')
+    argparser.add_argument(
+        '-c', '--cell',
+        metavar='C',
+        default='lstm',
+        help='The rnn cell type')
     args = argparser.parse_args()
     return args
 

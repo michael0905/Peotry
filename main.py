@@ -1,7 +1,8 @@
 import tensorflow as tf
 
 from data_loader.data_generator import DataGenerator
-from models.generator_model import GeneratorModel
+from models.LSTMModel import LSTMModel
+from models.GRUModel import GRUModel
 from trainers.trainer import Trainer
 from utils.config import process_config
 from utils.dirs import create_dirs
@@ -15,14 +16,22 @@ def main():
     try:
         args = get_args()
         mode = args.mode
+        cell = args.cell
 
     except:
         print("missing or invalid arguments")
-        print("usage: python3 main.py -m train|test")
+        print("usage: python3 main.py -m train|test -c lstm|gru")
+        exit(0)
+
+    if cell not in ['lstm', 'gru']:
+        print("usage: python3 main.py -m train|test -c lstm|gru")
         exit(0)
 
     if mode == 'train':
-        config_file = "configs/config.json"
+        if cell == 'lstm':
+            config_file = "configs/config.json"
+        else:
+            config_file = "configs/gru_config.json"
         config = process_config(config_file)
         # create the experiments dirs
         create_dirs([config.summary_dir, config.checkpoint_dir])
@@ -30,7 +39,10 @@ def main():
         # create your data generator
         data = DataGenerator(config)
         # create an instance of the model you want
-        model = GeneratorModel(config, data.word_num)
+        if cell == 'lstm':
+            model = LSTMModel(config, data.word_num)
+        else:
+            model = GRUModel(config, data.word_num)
         # create tensorflow session
         sess = tf.Session()
         #load model if exists
@@ -41,7 +53,10 @@ def main():
         trainer = Trainer(sess, model, data, config, logger)
         trainer.train()
     elif mode == 'test':
-        config_file = "configs/test_config.json"
+        if cell == 'lstm':
+            config_file = "configs/test_lstm_config.json"
+        else:
+            config_file = "configs/test_gru_config.json"
         config = process_config(config_file)
 
         # create the experiments dirs
@@ -50,7 +65,10 @@ def main():
         # create your data generator
         data = DataGenerator(config)
         # create an instance of the model you want
-        model = GeneratorModel(config, data.word_num)
+        if cell == 'lstm':
+            model = LSTMModel(config, data.word_num)
+        else:
+            model = GRUModel(config, data.word_num)
         # create tensorflow session
         sess = tf.Session()
         #load model if exists

@@ -2,7 +2,7 @@ from base.base_train import BaseTrain
 from tqdm import tqdm
 import numpy as np
 import tensorflow as tf
-from models.generator_model import GeneratorModel
+# from models.generator_model import GeneratorModel
 
 
 class Trainer(BaseTrain):
